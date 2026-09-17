@@ -67,8 +67,8 @@ public class ProductController {
     @GetMapping("/recommendations")
     public ResponseEntity<List<ProductDto.ProductResponse>> recommendations(
             @AuthenticationPrincipal UserDetails userDetails) {
-        com.capstone.ebookstore.entity.User user =
-                (com.capstone.ebookstore.entity.User) userDetails;
-        return ResponseEntity.ok(productService.getRecommendations(user.getId()));
+        com.capstone.ebookstore.security.UserPrincipal principal =
+                (com.capstone.ebookstore.security.UserPrincipal) userDetails;
+        return ResponseEntity.ok(productService.getRecommendations(principal.getId()));
     }
 }

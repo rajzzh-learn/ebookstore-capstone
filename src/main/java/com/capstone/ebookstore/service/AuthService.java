@@ -6,6 +6,7 @@ import com.capstone.ebookstore.exception.ConflictException;
 import com.capstone.ebookstore.exception.ResourceNotFoundException;
 import com.capstone.ebookstore.repository.UserRepository;
 import com.capstone.ebookstore.security.JwtTokenProvider;
+import com.capstone.ebookstore.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,7 +36,8 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
         userRepository.save(user);
-        String token = jwtTokenProvider.generateToken(user);
+        UserPrincipal principal = new UserPrincipal(user);
+        String token = jwtTokenProvider.generateToken(principal);
         return AuthDto.AuthResponse.builder()
                 .token(token)
                 .tokenType("Bearer")
@@ -47,13 +49,13 @@ public class AuthService {
     public AuthDto.AuthResponse login(AuthDto.LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        User user = (User) auth.getPrincipal();
-        String token = jwtTokenProvider.generateToken(user);
+        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+        String token = jwtTokenProvider.generateToken(principal);
         return AuthDto.AuthResponse.builder()
                 .token(token)
                 .tokenType("Bearer")
-                .userId(user.getId())
-                .email(user.getEmail())
+                .userId(principal.getId())
+                .email(principal.getEmail())
                 .build();
     }
 
