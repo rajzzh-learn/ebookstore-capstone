@@ -45,6 +45,15 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
+                // Public frontend & static resources
+                .requestMatchers(
+                        "/",
+                        "/index.html",
+                        "/favicon.ico",
+                        "/css/**",
+                        "/js/**",
+                        "/images/**",
+                        "/static/**").permitAll()
                 // Public endpoints
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET,

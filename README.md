@@ -216,6 +216,6 @@ git push origin feature/api-implementation
 - [x] Buy-again from order history
 - [x] Related products & personalised recommendations
 - [x] Swagger UI available
-- [ ] Deploy to local machine and run
+- [x] Deploy to local machine and run
 - [ ] Video walkthrough recorded
-- [ ] PR raised on personal GitHub
+- [x] PR raised on personal GitHub
