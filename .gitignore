@@ -1,0 +1,23 @@
+# Compiled class files
+*.class
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Secrets - never commit
+.env
+*.env
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+logs/
