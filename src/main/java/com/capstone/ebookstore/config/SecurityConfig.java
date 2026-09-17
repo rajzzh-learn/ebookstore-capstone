@@ -51,8 +51,14 @@ public class SecurityConfig {
                         "/api/v1/products/**",
                         "/api/v1/categories/**",
                         "/api/v1/brands/**").permitAll()
-                // Swagger UI
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Swagger UI – permit all springdoc paths
+                .requestMatchers(
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**").permitAll()
                 // Everything else requires auth
                 .anyRequest().authenticated()
             )
