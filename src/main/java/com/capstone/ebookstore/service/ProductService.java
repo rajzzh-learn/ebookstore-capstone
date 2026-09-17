@@ -27,8 +27,14 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductDto.ProductPage getProducts(Long categoryId, Long brandId,
                                               String search, int page, int size) {
+        boolean filterByCat    = categoryId != null;
+        boolean filterByBrand  = brandId    != null;
+        boolean filterBySearch = search     != null && !search.isBlank();
         Page<Product> pageResult = productRepository.findByFilters(
-                categoryId, brandId, search, PageRequest.of(page, size));
+                filterByCat, categoryId,
+                filterByBrand, brandId,
+                filterBySearch, filterBySearch ? search : "",
+                PageRequest.of(page, size));
         return ProductDto.ProductPage.builder()
                 .content(pageResult.getContent().stream().map(this::toResponse).toList())
                 .page(page)
