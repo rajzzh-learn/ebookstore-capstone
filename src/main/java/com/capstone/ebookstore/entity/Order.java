@@ -47,6 +47,12 @@ public class Order {
     @Builder.Default
     private int giftPointsRedeemed = 0;
 
+    /** Gift points earned on this order (1 point per $ of totalAmount).
+     *  Tracked so that cancellation can reverse them correctly. */
+    @Column(nullable = false)
+    @Builder.Default
+    private int giftPointsEarned = 0;
+
     @Column(nullable = false, precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal discountAmount = BigDecimal.ZERO;

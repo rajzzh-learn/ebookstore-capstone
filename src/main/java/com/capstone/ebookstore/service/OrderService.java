@@ -1,6 +1,5 @@
 package com.capstone.ebookstore.service;
 
-import com.capstone.ebookstore.dto.AuthDto;
 import com.capstone.ebookstore.dto.CartDto;
 import com.capstone.ebookstore.dto.OrderDto;
 import com.capstone.ebookstore.entity.*;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -45,13 +45,22 @@ public class OrderService {
         BigDecimal discount = BigDecimal.ZERO;
         int pointsRedeemed = 0;
 
+        // --- Bug #3 fix: recalculate pointsRedeemed AFTER capping discount at subtotal ---
         if (request.isUseGiftPoints() && request.getGiftPointsToRedeem() > 0) {
             int maxRedeemable = Math.min(request.getGiftPointsToRedeem(), user.getGiftPoints());
-            pointsRedeemed = maxRedeemable;
             discount = GIFT_POINT_VALUE.multiply(BigDecimal.valueOf(maxRedeemable));
-            if (discount.compareTo(subtotal) > 0) discount = subtotal;
+            if (discount.compareTo(subtotal) > 0) {
+                // Cap discount and recalculate only the points actually consumed
+                discount = subtotal;
+                pointsRedeemed = subtotal.divide(GIFT_POINT_VALUE, 0, RoundingMode.DOWN).intValue();
+            } else {
+                pointsRedeemed = maxRedeemable;
+            }
         }
         BigDecimal total = subtotal.subtract(discount).max(BigDecimal.ZERO);
+
+        // --- Bug #2 fix: track earned points on the order so cancellation can reverse them ---
+        int earned = total.setScale(0, RoundingMode.DOWN).intValue() * GIFT_POINTS_PER_UNIT_SPENT;
 
         Order order = Order.builder()
                 .orderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
@@ -59,6 +68,7 @@ public class OrderService {
                 .deliveryAddress(address)
                 .subtotal(subtotal)
                 .giftPointsRedeemed(pointsRedeemed)
+                .giftPointsEarned(earned)
                 .discountAmount(discount)
                 .totalAmount(total)
                 .paymentMethod(method)
@@ -66,19 +76,28 @@ public class OrderService {
                 .placedAt(Instant.now())
                 .build();
 
-        // Copy cart items into order items
+        // --- Bug #1 fix: decrement stock for each product; validate no oversell at checkout ---
         for (CartItem ci : cart.getItems()) {
+            Product product = ci.getProduct();
+            int newStock = product.getStockQuantity() - ci.getQuantity();
+            if (newStock < 0) {
+                throw new BadRequestException(
+                        "Insufficient stock for '" + product.getTitle() + "'. " +
+                        "Available: " + product.getStockQuantity() +
+                        ", Requested: " + ci.getQuantity());
+            }
+            product.setStockQuantity(newStock);
+
             OrderItem oi = OrderItem.builder()
                     .order(order)
-                    .product(ci.getProduct())
+                    .product(product)
                     .quantity(ci.getQuantity())
                     .unitPrice(ci.getUnitPrice())
                     .build();
             order.getItems().add(oi);
         }
 
-        // Deduct gift points used and award new ones (1 point per dollar)
-        int earned = total.intValue() * GIFT_POINTS_PER_UNIT_SPENT;
+        // Deduct redeemed points and credit earned ones (1 point per $ of order total)
         user.setGiftPoints(user.getGiftPoints() - pointsRedeemed + earned);
         userRepository.save(user);
 
@@ -116,9 +135,10 @@ public class OrderService {
         order.setStatus(Order.OrderStatus.CANCELLED);
         order.setCancelledAt(Instant.now());
 
-        // Refund gift points if redeemed
-        if (order.getGiftPointsRedeemed() > 0) {
-            user.setGiftPoints(user.getGiftPoints() + order.getGiftPointsRedeemed());
+        // --- Bug #2 fix: refund redeemed points AND reverse earned points on cancellation ---
+        int pointAdjustment = order.getGiftPointsRedeemed() - order.getGiftPointsEarned();
+        if (pointAdjustment != 0) {
+            user.setGiftPoints(Math.max(0, user.getGiftPoints() + pointAdjustment));
             userRepository.save(user);
         }
         return toResponse(orderRepository.save(order));
@@ -166,6 +186,7 @@ public class OrderService {
                 .deliveryAddress(buildAddressResponse(o.getDeliveryAddress()))
                 .subtotal(o.getSubtotal())
                 .giftPointsRedeemed(o.getGiftPointsRedeemed())
+                .giftPointsEarned(o.getGiftPointsEarned())
                 .discountAmount(o.getDiscountAmount())
                 .totalAmount(o.getTotalAmount())
                 .paymentMethod(o.getPaymentMethod().name())
