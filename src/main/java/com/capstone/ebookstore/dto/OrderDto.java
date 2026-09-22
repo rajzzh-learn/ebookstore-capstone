@@ -38,6 +38,7 @@ public class OrderDto {
         private AddressDto.AddressResponse deliveryAddress;
         private BigDecimal subtotal;
         private int giftPointsRedeemed;
+        private int giftPointsEarned;
         private BigDecimal discountAmount;
         private BigDecimal totalAmount;
         private String paymentMethod;
