@@ -189,23 +189,38 @@ A full code review was performed using AI-assisted analysis (IBM Kiro). **33 iss
 
 ### 8.1 Issue Summary by Severity
 
-| Severity | Count | Status |
-|:---|:---:|:---:|
-| 🔴 Critical | 3 | ✅ Fixed in v1.1.0 |
-| 🟠 High | 11 | 🔲 Open |
-| 🟡 Medium | 7 | 🔲 Open |
-| 🟢 Low | 10 | 🔲 Open |
-| **Total** | **31** | |
+| Severity | Count | Fixed | Open |
+|:---|:---:|:---:|:---:|
+| 🔴 Critical | 3 | 3 | 0 |
+| 🟠 High | 11 | 0 | 11 |
+| 🟡 Medium | 7 | 0 | 7 |
+| 🟢 Low | 10 | 0 | 10 |
+| **Total** | **31** | **3** | **28** |
 
-> Issue #1 was pre-existing. Issue #16 was a duplicate and closed. Total open issues: 31.
+> Issue #1 was pre-existing. Issue #16 was a duplicate and closed. Total tracked issues: 31.
 
-### 8.2 Critical Issues — Fixed in v1.1.0
+---
+
+### 8.2 Fixed Issues Log
+
+All fixes are tracked against the GitHub issue, the release version they were resolved in, the fix commit, and the date closed.
+
+| Issue | Title | Severity | Fixed In | Commit | Date Closed |
+|:---:|:---|:---:|:---:|:---:|:---:|
+| [#2](https://github.com/rajzzh-learn/ebookstore-capstone/issues/2) | Product stock never decremented on order placement | 🔴 Critical | v1.1.0 | `6761ed0` | 2026-09-22 |
+| [#3](https://github.com/rajzzh-learn/ebookstore-capstone/issues/3) | Earned gift points not reversed on cancellation | 🔴 Critical | v1.1.0 | `6761ed0` | 2026-09-22 |
+| [#4](https://github.com/rajzzh-learn/ebookstore-capstone/issues/4) | Excess gift points stolen when discount capped | 🔴 Critical | v1.1.0 | `6761ed0` | 2026-09-22 |
+
+---
+
+### 8.3 Critical Issues — Fixed in v1.1.0
 
 The following three critical bugs were identified, fixed, tested, and released in **v1.1.0**. Each issue has a corresponding GitHub issue with full root cause analysis, suggested fix, and acceptance criteria.
 
 ---
 
-#### 🔴 [Issue #2] — Product stock is never decremented when an order is placed
+#### ✅ [Issue #2] — Product stock is never decremented when an order is placed
+- **Status:** Closed — Fixed in v1.1.0 (commit `6761ed0`, 2026-09-22)
 - **GitHub Issue:** https://github.com/rajzzh-learn/ebookstore-capstone/issues/2
 - **Affected File:** `service/OrderService.java` — `placeOrder()`
 - **Root Cause:** `placeOrder()` copied cart items into order items but never called `product.setStockQuantity()`. Any product could be oversold indefinitely regardless of available stock.
@@ -217,7 +232,8 @@ The following three critical bugs were identified, fixed, tested, and released i
 
 ---
 
-#### 🔴 [Issue #3] — Earned gift points not reversed on order cancellation (infinite point farming exploit)
+#### ✅ [Issue #3] — Earned gift points not reversed on order cancellation (infinite point farming exploit)
+- **Status:** Closed — Fixed in v1.1.0 (commit `6761ed0`, 2026-09-22)
 - **GitHub Issue:** https://github.com/rajzzh-learn/ebookstore-capstone/issues/3
 - **Affected File:** `service/OrderService.java`, `entity/Order.java`
 - **Root Cause:** `placeOrder()` awarded gift points immediately (`user.giftPoints += earned`) but `cancelOrder()` only refunded *redeemed* points — earned points were never deducted. A user could place → cancel → repeat to farm unlimited points with real monetary value.
@@ -230,7 +246,8 @@ The following three critical bugs were identified, fixed, tested, and released i
 
 ---
 
-#### 🔴 [Issue #4] — Excess gift points silently stolen when discount is capped at subtotal
+#### ✅ [Issue #4] — Excess gift points silently stolen when discount is capped at subtotal
+- **Status:** Closed — Fixed in v1.1.0 (commit `6761ed0`, 2026-09-22)
 - **GitHub Issue:** https://github.com/rajzzh-learn/ebookstore-capstone/issues/4
 - **Affected File:** `service/OrderService.java` — `placeOrder()`
 - **Root Cause:** When a user redeemed more points than the cart subtotal could absorb, the discount was correctly capped at the subtotal — but `pointsRedeemed` was set *before* the cap and never recalculated. Example: 10,000 points ($100) on a $30 cart → discount capped at $30, but 10,000 points deducted instead of 3,000.
@@ -242,7 +259,7 @@ The following three critical bugs were identified, fixed, tested, and released i
 
 ---
 
-### 8.3 High Severity Issues — Open
+### 8.4 High Severity Issues — Open
 
 | # | Issue | File |
 |:---|:---|:---|
